@@ -1,4 +1,4 @@
-module github.com/duke-git/lancet/v2
+module github.com/neonyo/lancet/v2
 
 go 1.18
 
