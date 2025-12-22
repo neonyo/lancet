@@ -19,7 +19,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/duke-git/lancet/v2/structs"
+	"github.com/neonyo/lancet/v2/structs"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 )

@@ -4,7 +4,7 @@ import (
 	"math"
 	"testing"
 
-	"github.com/duke-git/lancet/v2/internal"
+	"github.com/neonyo/lancet/v2/internal"
 )
 
 func TestExponent(t *testing.T) {

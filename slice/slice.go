@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/duke-git/lancet/v2/random"
+	"github.com/neonyo/lancet/v2/random"
 	"golang.org/x/exp/constraints"
 )
 

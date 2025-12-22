@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/duke-git/lancet/v2/internal"
+	"github.com/neonyo/lancet/v2/internal"
 )
 
 func TestEqual(t *testing.T) {

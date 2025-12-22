@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/duke-git/lancet/v2/convertor"
+	"github.com/neonyo/lancet/v2/convertor"
 	"golang.org/x/exp/constraints"
 )
 

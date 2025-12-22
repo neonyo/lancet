@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/duke-git/lancet/v2/internal"
-	"github.com/duke-git/lancet/v2/validator"
+	"github.com/neonyo/lancet/v2/internal"
+	"github.com/neonyo/lancet/v2/validator"
 )
 
 func TestRandString(t *testing.T) {

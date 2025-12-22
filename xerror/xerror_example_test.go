@@ -61,7 +61,7 @@ func ExampleXError_StackTrace() {
 	fmt.Println(containFile)
 
 	// Output:
-	// github.com/duke-git/lancet/v2/xerror.ExampleXError_StackTrace
+	// github.com/neonyo/lancet/v2/xerror.ExampleXError_StackTrace
 	// 53
 	// true
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/duke-git/lancet/v2/pointer"
+	"github.com/neonyo/lancet/v2/pointer"
 )
 
 // defaultTagName is the default tag for struct fields to lookup.

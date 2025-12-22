@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/duke-git/lancet/v2/constraints"
-	"github.com/duke-git/lancet/v2/datastructure"
+	"github.com/neonyo/lancet/v2/constraints"
+	"github.com/neonyo/lancet/v2/datastructure"
 )
 
 func preOrderTraverse[T any](node *datastructure.TreeNode[T]) []T {

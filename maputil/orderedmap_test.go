@@ -3,7 +3,7 @@ package maputil
 import (
 	"testing"
 
-	"github.com/duke-git/lancet/v2/internal"
+	"github.com/neonyo/lancet/v2/internal"
 )
 
 func TestOrderedMap_Set_Get(t *testing.T) {

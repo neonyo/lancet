@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/duke-git/lancet/v2/convertor"
-	"github.com/duke-git/lancet/v2/mathutil"
+	"github.com/neonyo/lancet/v2/convertor"
+	"github.com/neonyo/lancet/v2/mathutil"
 	"golang.org/x/exp/constraints"
 )
 

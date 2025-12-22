@@ -14,7 +14,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/duke-git/lancet/v2/validator"
+	"github.com/neonyo/lancet/v2/validator"
 	"golang.org/x/text/encoding/simplifiedchinese"
 )
 

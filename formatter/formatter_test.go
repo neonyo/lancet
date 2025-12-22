@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/duke-git/lancet/v2/internal"
+	"github.com/neonyo/lancet/v2/internal"
 )
 
 func TestComma(t *testing.T) {

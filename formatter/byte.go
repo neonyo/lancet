@@ -7,8 +7,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/duke-git/lancet/v2/mathutil"
-	"github.com/duke-git/lancet/v2/strutil"
+	"github.com/neonyo/lancet/v2/mathutil"
+	"github.com/neonyo/lancet/v2/strutil"
 )
 
 //

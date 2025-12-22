@@ -13,7 +13,7 @@ import (
 
 	"golang.org/x/exp/constraints"
 
-	"github.com/duke-git/lancet/v2/slice"
+	"github.com/neonyo/lancet/v2/slice"
 )
 
 // Keys returns a slice of the map's keys.

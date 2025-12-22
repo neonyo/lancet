@@ -12,9 +12,9 @@ import (
 	"unicode/utf8"
 	"unsafe"
 
-	"github.com/duke-git/lancet/v2/internal"
-	"github.com/duke-git/lancet/v2/slice"
-	"github.com/duke-git/lancet/v2/validator"
+	"github.com/neonyo/lancet/v2/internal"
+	"github.com/neonyo/lancet/v2/slice"
+	"github.com/neonyo/lancet/v2/validator"
 )
 
 func TestToChar(t *testing.T) {
