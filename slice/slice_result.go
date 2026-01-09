@@ -1,7 +1,12 @@
 package slice
 
 import (
+	"fmt"
 	"reflect"
+	"strconv"
+	"strings"
+
+	"github.com/neonyo/lancet/v2/enum"
 )
 
 // Pluck returns a slice of values from each item in the slice.
@@ -237,4 +242,167 @@ func safeDeref(v reflect.Value) reflect.Value {
 		v = v.Elem()
 	}
 	return v
+}
+
+// EqualIgnoreOrder 比较切片和字符串是否存在相等 忽略顺序
+func EqualIgnoreOrder[T enum.SimpleType](str string, separator string, slice []T) bool {
+	fmt.Println(str, separator, slice)
+
+	// 分割字符串
+	strParts := strings.Split(str, separator)
+	if str == "" && len(slice) == 0 {
+		return true
+	}
+	// 如果长度不同，直接返回false
+	if len(strParts) != len(slice) {
+		return false
+	}
+
+	// 创建映射统计元素频率
+	freq := make(map[T]int, len(strParts))
+	// 统计字符串中的元素
+	for _, part := range strParts {
+		// 去除空格
+		trimmed := strings.TrimSpace(part)
+		elem, err := parseToType[T](trimmed)
+		if err != nil {
+			return false // 转换失败，直接返回 false
+		}
+		freq[elem]++
+	}
+
+	// 统计切片中的元素并比较
+	for _, item := range slice {
+		if count, exists := freq[item]; exists && count > 0 {
+			freq[item]--
+		} else {
+			return false
+		}
+	}
+
+	// 检查所有元素都匹配
+	for _, count := range freq {
+		if count != 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func parseToType[T enum.SimpleType](s string) (T, error) {
+	var zero T
+	var result interface{}
+	var err error
+
+	// 根据类型进行转换
+	switch any(zero).(type) {
+	case string:
+		result = s
+	case int:
+		var val int
+		val, err = strconv.Atoi(s)
+		result = val
+	case int8:
+		var val int64
+		val, err = strconv.ParseInt(s, 10, 8)
+		result = int8(val)
+	case int16:
+		var val int64
+		val, err = strconv.ParseInt(s, 10, 16)
+		result = int16(val)
+	case int32:
+		var val int64
+		val, err = strconv.ParseInt(s, 10, 32)
+		result = int32(val)
+	case int64:
+		var val int64
+		val, err = strconv.ParseInt(s, 10, 64)
+		result = val
+	case uint:
+		var val uint64
+		val, err = strconv.ParseUint(s, 10, 0)
+		result = uint(val)
+	case uint8:
+		var val uint64
+		val, err = strconv.ParseUint(s, 10, 8)
+		result = uint8(val)
+	case uint16:
+		var val uint64
+		val, err = strconv.ParseUint(s, 10, 16)
+		result = uint16(val)
+	case uint32:
+		var val uint64
+		val, err = strconv.ParseUint(s, 10, 32)
+		result = uint32(val)
+	case uint64:
+		var val uint64
+		val, err = strconv.ParseUint(s, 10, 64)
+		result = val
+	case float32:
+		var val float64
+		val, err = strconv.ParseFloat(s, 32)
+		result = float32(val)
+	case float64:
+		var val float64
+		val, err = strconv.ParseFloat(s, 64)
+		result = val
+	case bool:
+		var val bool
+		val, err = strconv.ParseBool(s)
+		result = val
+	default:
+		return zero, nil
+	}
+
+	if err != nil {
+		return zero, err
+	}
+
+	return result.(T), nil
+}
+
+// ParseIntegerSlice 解析字符串为数字类型切片
+func ParseIntegerSlice[T enum.Number](str string, bitSize int) ([]T, error) {
+	if str == "" {
+		return []T{}, nil
+	}
+
+	parts := strings.Split(str, ",")
+	result := make([]T, 0, len(parts))
+
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed == "" {
+			continue
+		}
+
+		// 根据类型转换
+		var num T
+		switch any(num).(type) {
+		case int, int8, int16, int32, int64:
+			val, err := strconv.ParseInt(trimmed, 10, bitSize)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, T(val))
+		case uint, uint8, uint16, uint32, uint64:
+			val, err := strconv.ParseUint(trimmed, 10, bitSize)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, T(val))
+		case float32, float64:
+			val, err := strconv.ParseFloat(trimmed, bitSize)
+			if err != nil {
+				return nil, err
+			}
+			result = append(result, T(val))
+			return result, nil
+		default:
+			return nil, strconv.ErrSyntax
+		}
+	}
+
+	return result, nil
 }
