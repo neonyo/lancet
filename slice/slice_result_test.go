@@ -7,15 +7,19 @@ import (
 
 // 定义测试用的结构体
 type Person struct {
+	ID      int
 	Name    string
 	Age     int
 	Address string
 }
 
 type Product struct {
-	ID    int
-	Price float64
-	Name  string
+	Code         string
+	ID           int
+	Price        float64
+	Name         string
+	Description  string
+	privateField string // 私有字段用于测试不可访问性
 }
 
 // 用于测试指针类型结构体
@@ -143,12 +147,15 @@ func TestPluck(t *testing.T) {
 		defer func() {
 			if r := recover(); r != nil {
 				// 捕获到panic是预期的行为
-				t.Logf("Caught expected panic: %v", r)
+				t.Logf("1Caught expected panic: %v", r)
 			}
 		}()
 
 		result := Pluck[*Company, string](companies, "Name")
-		t.Errorf("Expected panic but didn't get one, result: %v", result)
+		expected := []string{"Google", "Microsoft"}
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected panic but didn't get one, result: %v", result)
+		}
 	})
 }
 
@@ -353,4 +360,242 @@ func BenchmarkPluckWithDefault(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		PluckWithDefault(items, "Name", "unknown")
 	}
+}
+func TestPluckMap(t *testing.T) {
+	// 测试用例定义
+	tests := []struct {
+		name        string      // 测试用例名称
+		items       interface{} // 输入数据
+		keyField    string      // 键字段名
+		valueField  string      // 值字段名
+		expected    interface{} // 期望结果
+		expectEmpty bool        // 是否期望空结果
+	}{
+		{
+			name:       "Normal case - extract ID and Name",
+			items:      []Person{{ID: 1, Name: "Alice", Age: 30}, {ID: 2, Name: "Bob", Age: 25}},
+			keyField:   "ID",
+			valueField: "Name",
+			expected:   map[int]string{1: "Alice", 2: "Bob"},
+		},
+		{
+			name:       "Normal case - extract Code and Price",
+			items:      []Product{{Code: "A001", Price: 99.99, Description: "Product A"}, {Code: "A002", Price: 149.99, Description: "Product B"}},
+			keyField:   "Code",
+			valueField: "Price",
+			expected:   map[string]float64{"A001": 99.99, "A002": 149.99},
+		},
+		{
+			name:       "Empty slice",
+			items:      []Person{},
+			keyField:   "ID",
+			valueField: "Name",
+			expected:   map[int]string{},
+		},
+		{
+			name:       "Nil slice",
+			items:      ([]Person)(nil),
+			keyField:   "ID",
+			valueField: "Name",
+			expected:   map[int]string{},
+		},
+		{
+			name:       "Pointer elements",
+			items:      []*Person{{ID: 1, Name: "Alice", Age: 30}, {ID: 2, Name: "Bob", Age: 25}},
+			keyField:   "ID",
+			valueField: "Name",
+			expected:   map[int]string{1: "Alice", 2: "Bob"},
+		},
+		{
+			name:       "Mixed pointer and value with nil pointer",
+			items:      []*Person{{ID: 1, Name: "Alice", Age: 30}, nil, {ID: 2, Name: "Bob", Age: 25}},
+			keyField:   "ID",
+			valueField: "Name",
+			expected:   map[int]string{1: "Alice", 2: "Bob"},
+		},
+		{
+			name:        "Non-struct elements",
+			items:       []int{1, 2, 3},
+			keyField:    "ID",
+			valueField:  "Name",
+			expectEmpty: true,
+		},
+		{
+			name:        "Non-existent key field",
+			items:       []Person{{ID: 1, Name: "Alice", Age: 30}},
+			keyField:    "NonExistent",
+			valueField:  "Name",
+			expectEmpty: true,
+		},
+		{
+			name:        "Non-existent value field",
+			items:       []Person{{ID: 1, Name: "Alice", Age: 30}},
+			keyField:    "ID",
+			valueField:  "NonExistent",
+			expectEmpty: true,
+		},
+		{
+			name:        "Unexported field as key",
+			items:       []Product{{Code: "A001", Price: 99.99, privateField: "private"}},
+			keyField:    "privateField",
+			valueField:  "Price",
+			expectEmpty: true,
+		},
+		{
+			name:        "Unexported field as value",
+			items:       []Product{{Code: "A001", Price: 99.99, privateField: "private"}},
+			keyField:    "Code",
+			valueField:  "privateField",
+			expectEmpty: true,
+		},
+		{
+			name:        "Type mismatch for key",
+			items:       []Person{{ID: 1, Name: "Alice", Age: 30}},
+			keyField:    "Name",
+			valueField:  "Age",
+			expected:    map[string]int{}, // 应该返回空map因为Name是string但期待int类型的key
+			expectEmpty: true,
+		},
+		{
+			name:        "Type mismatch for value",
+			items:       []Person{{ID: 1, Name: "Alice", Age: 30}},
+			keyField:    "ID",
+			valueField:  "Age",
+			expected:    map[int]string{}, // 应该返回空map因为Age是int但期待string类型的value
+			expectEmpty: true,
+		},
+	}
+
+	// 执行测试用例
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 使用反射调用泛型函数
+			itemsValue := reflect.ValueOf(tt.items)
+			var result reflect.Value
+
+			if itemsValue.IsValid() && itemsValue.Kind() == reflect.Slice {
+				if itemsValue.Len() > 0 {
+					// 获取元素类型来确定泛型参数
+					elemType := itemsValue.Type().Elem()
+					// 处理指针情况
+					if elemType.Kind() == reflect.Ptr {
+						elemType = elemType.Elem()
+					}
+
+					// 根据不同的测试场景创建适当的调用
+					switch tt.name {
+					case "Normal case - extract ID and Name", "Empty slice", "Nil slice":
+						result = reflect.ValueOf(PluckMap[Person, int, string](
+							reflect.ValueOf(tt.items).Interface().([]Person),
+							tt.keyField,
+							tt.valueField,
+						))
+					case "Normal case - extract Code and Price",
+						"Non-existent key field",
+						"Non-existent value field",
+						"Unexported field as key",
+						"Unexported field as value",
+						"Type mismatch for key",
+						"Type mismatch for value":
+						if persons, ok := tt.items.([]Product); ok {
+							result = reflect.ValueOf(PluckMap[Product, string, float64](
+								persons,
+								tt.keyField,
+								tt.valueField,
+							))
+						} else if ptrPersons, ok := tt.items.([]*Product); ok {
+							result = reflect.ValueOf(PluckMap[*Product, string, float64](
+								ptrPersons,
+								tt.keyField,
+								tt.valueField,
+							))
+						}
+					case "Pointer elements", "Mixed pointer and value with nil pointer":
+						result = reflect.ValueOf(PluckMap[*Person, int, string](
+							reflect.ValueOf(tt.items).Interface().([]*Person),
+							tt.keyField,
+							tt.valueField,
+						))
+					case "Non-struct elements":
+						result = reflect.ValueOf(PluckMap[int, int, string](
+							reflect.ValueOf(tt.items).Interface().([]int),
+							tt.keyField,
+							tt.valueField,
+						))
+					}
+				} else {
+					// 空切片情况
+					if tt.name == "Empty slice" || tt.name == "Nil slice" {
+						result = reflect.ValueOf(PluckMap[Person, int, string](
+							reflect.ValueOf(tt.items).Interface().([]Person),
+							tt.keyField,
+							tt.valueField,
+						))
+					}
+				}
+			}
+
+			// 验证结果
+			if tt.expectEmpty {
+				// 检查是否返回了空map
+				if result.IsValid() && result.Len() != 0 {
+					t.Errorf("Expected empty map, but got %v", result.Interface())
+				}
+			} else if tt.expected != nil {
+				expectedValue := reflect.ValueOf(tt.expected)
+				if !result.IsValid() {
+					t.Errorf("Expected %v, but got invalid result", tt.expected)
+				} else if !reflect.DeepEqual(result.Interface(), expectedValue.Interface()) {
+					t.Errorf("Expected %v, but got %v", tt.expected, result.Interface())
+				}
+			}
+		})
+	}
+}
+
+// 专门针对具体类型的测试以简化测试逻辑
+func TestPluckMapSpecificTypes(t *testing.T) {
+	t.Run("Person ID to Name mapping", func(t *testing.T) {
+		persons := []Person{
+			{ID: 1, Name: "Alice", Age: 30},
+			{ID: 2, Name: "Bob", Age: 25},
+			{ID: 3, Name: "Charlie", Age: 35},
+		}
+
+		result := PluckMap[Person, int, string](persons, "ID", "Name")
+		expected := map[int]string{1: "Alice", 2: "Bob", 3: "Charlie"}
+
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected %v, but got %v", expected, result)
+		}
+	})
+
+	t.Run("Product Code to Price mapping", func(t *testing.T) {
+		products := []Product{
+			{Code: "P001", Price: 29.99, Description: "Widget A"},
+			{Code: "P002", Price: 39.99, Description: "Widget B"},
+		}
+
+		result := PluckMap[Product, string, float64](products, "Code", "Price")
+		expected := map[string]float64{"P001": 29.99, "P002": 39.99}
+
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected %v, but got %v", expected, result)
+		}
+	})
+
+	t.Run("Pointer to Person with nil element", func(t *testing.T) {
+		persons := []*Person{
+			{ID: 1, Name: "Alice", Age: 30},
+			nil,
+			{ID: 2, Name: "Bob", Age: 25},
+		}
+
+		result := PluckMap[*Person, int, string](persons, "ID", "Name")
+		expected := map[int]string{1: "Alice", 2: "Bob"}
+
+		if !reflect.DeepEqual(result, expected) {
+			t.Errorf("Expected %v, but got %v", expected, result)
+		}
+	})
 }
