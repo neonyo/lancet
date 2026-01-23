@@ -50,6 +50,51 @@ func Pluck[S any, T comparable](items []S, fieldName string) (result []T) {
 	return result
 }
 
+// PluckFilter returns a slice of values from each item in the slice.
+func PluckFilter[S any, T comparable](items []S, fieldName string, fn func(i S) bool) (result []T) {
+	result = make([]T, 0)
+
+	for _, item := range items {
+		// 使用反射获取字段值
+		val := reflect.ValueOf(item)
+		if !val.IsValid() {
+			continue
+		}
+
+		// 安全地解引用指针
+		val = safeDeref(val)
+		if !val.IsValid() {
+			continue
+		}
+
+		if val.Kind() == reflect.Ptr {
+			if val.IsNil() {
+				continue
+			}
+			val = val.Elem()
+		}
+
+		field := val.FieldByName(fieldName)
+		if !field.IsValid() {
+			continue
+		}
+
+		// 类型断言
+		fieldValue, ok := field.Interface().(T)
+		if !ok {
+			continue
+		}
+
+		if !fn(item) {
+			continue
+		}
+
+		result = append(result, fieldValue)
+	}
+
+	return result
+}
+
 // PluckMap returns a slice of values from each item in the slice.
 func PluckMap[S any, K, V comparable](items []S, keyField, valueField string) (result map[K]V) {
 	result = make(map[K]V)
