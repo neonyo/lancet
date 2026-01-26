@@ -50,6 +50,71 @@ func Pluck[S any, T comparable](items []S, fieldName string) (result []T) {
 	return result
 }
 
+type FieldSelector struct {
+	FieldName string
+	Result    any // 指向切片的指针
+}
+
+// PluckBySelectors returns a slice of values from each item in the slice.
+func PluckBySelectors[S any](items []S, selectors []FieldSelector) {
+	if len(items) == 0 {
+		return
+	}
+
+	// 第一个元素用于确定字段类型
+	firstItem := items[0]
+	val := reflect.ValueOf(firstItem)
+	val = safeDeref(val)
+
+	// 验证所有字段并初始化切片
+	for _, selector := range selectors {
+		field := val.FieldByName(selector.FieldName)
+		if !field.IsValid() {
+			return
+		}
+
+		// 检查 Result 是否是切片指针
+		resultPtr := reflect.ValueOf(selector.Result)
+		if resultPtr.Kind() != reflect.Ptr {
+			return
+		}
+
+		sliceVal := resultPtr.Elem()
+		if sliceVal.Kind() != reflect.Slice {
+			return
+		}
+
+		// 确保切片元素类型匹配字段类型
+		elemType := sliceVal.Type().Elem()
+		if elemType != field.Type() {
+			return
+		}
+
+		// 初始化或清空切片
+		sliceVal.Set(reflect.MakeSlice(sliceVal.Type(), 0, len(items)))
+	}
+
+	// 填充数据
+	for _, item := range items {
+		itemVal := reflect.ValueOf(item)
+		itemVal = safeDeref(itemVal)
+
+		for _, selector := range selectors {
+			field := itemVal.FieldByName(selector.FieldName)
+			if !field.IsValid() {
+				continue
+			}
+
+			// 获取对应的切片并追加
+			slicePtr := reflect.ValueOf(selector.Result)
+			sliceVal := slicePtr.Elem()
+			sliceVal.Set(reflect.Append(sliceVal, field))
+		}
+	}
+
+	return
+}
+
 // PluckFilter returns a slice of values from each item in the slice.
 func PluckFilter[S any, T comparable](items []S, fieldName string, fn func(i S) bool) (result []T) {
 	result = make([]T, 0)
