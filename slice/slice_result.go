@@ -516,3 +516,51 @@ func ParseIntegerSlice[T enum.Number](str string, bitSize int) ([]T, error) {
 
 	return result, nil
 }
+
+func PluckColumnMap[T any, S comparable](items []T, keyField string) (result map[S]T) {
+	result = make(map[S]T)
+	if len(items) == 0 {
+		return
+	}
+
+	for _, item := range items {
+		val := reflect.ValueOf(item)
+
+		// 处理指针
+		if val.Kind() == reflect.Ptr {
+			if val.IsNil() {
+				continue // 跳过 nil 指针
+			}
+			val = val.Elem()
+		}
+		val = safeDeref(val)
+		if !val.IsValid() {
+			continue
+		}
+
+		// 确保是结构体
+		if val.Kind() != reflect.Struct {
+			return
+		}
+
+		// 获取 key 字段
+		keyFieldVal := val.FieldByName(keyField)
+		if !keyFieldVal.IsValid() {
+			return
+		}
+		if !keyFieldVal.CanInterface() {
+			return
+		}
+
+		// 类型断言
+		key, keyOk := keyFieldVal.Interface().(S)
+
+		if !keyOk {
+			return
+		}
+
+		result[key] = item
+	}
+
+	return result
+}
