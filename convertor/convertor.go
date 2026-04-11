@@ -556,3 +556,56 @@ func ToBigInt[T any](v T) (*big.Int, error) {
 
 	return result, nil
 }
+
+func ToSlice[T, S comparable](v []S) ([]T, error) {
+	var result []T
+	for _, item := range v {
+		val := ToValue[T](item)
+		result = append(result, val)
+	}
+	return result, nil
+}
+
+func ToValue[T comparable](v any) (value T) {
+	// 先尝试直接断言
+	if val, ok := v.(T); ok {
+		return val
+	}
+	switch any(value).(type) {
+	case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		int64Val, _ := ToInt(v)
+		switch any(value).(type) {
+		case int:
+			return any(int(int64Val)).(T)
+		case int8:
+			return any(int8(int64Val)).(T)
+		case int16:
+			return any(int16(int64Val)).(T)
+		case int32:
+			return any(int32(int64Val)).(T)
+		case int64:
+			return any(int64Val).(T)
+		case uint:
+			return any(uint(int64Val)).(T)
+		case uint8:
+			return any(uint8(int64Val)).(T)
+		case uint16:
+			return any(uint16(int64Val)).(T)
+		case uint32:
+			return any(uint32(int64Val)).(T)
+		case uint64:
+			return any(uint64(int64Val)).(T)
+		}
+	case float32, float64:
+		float64Val, _ := ToFloat(v)
+		switch any(value).(type) {
+		case float32:
+			return any(float32(float64Val)).(T)
+		case float64:
+			return any(float64Val).(T)
+		}
+	case string:
+		return any(ToString(v)).(T)
+	}
+	return
+}
