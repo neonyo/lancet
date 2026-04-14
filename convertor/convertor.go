@@ -557,10 +557,10 @@ func ToBigInt[T any](v T) (*big.Int, error) {
 	return result, nil
 }
 
-func ToSlice[T, S comparable](v []S) ([]T, error) {
-	var result []T
+func ToSlice[T, S comparable](v []T) ([]S, error) {
+	var result []S
 	for _, item := range v {
-		val := ToValue[T](item)
+		val := ToValue[S](item)
 		result = append(result, val)
 	}
 	return result, nil
