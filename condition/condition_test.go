@@ -134,3 +134,15 @@ func TestTernary(t *testing.T) {
 
 	assert.Equal(trueValue, Ternary(true, trueValue, falseValue))
 }
+
+func TestTernaryFn(t *testing.T) {
+	t.Parallel()
+
+	assert := internal.NewAssert(t, "TestTernaryFn")
+
+	result1 := TernaryFn(true, func() int { return 1 }, func() int { return 0 })
+	assert.Equal(1, result1)
+
+	result2 := TernaryFn(false, func() int { return 1 }, func() int { return 0 })
+	assert.Equal(0, result2)
+}

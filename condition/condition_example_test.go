@@ -161,3 +161,17 @@ func ExampleTernary() {
 	// 0
 	// 1
 }
+
+func ExampleTernaryFn() {
+	conditionTrue := 2 > 1
+	result1 := TernaryFn(conditionTrue, func() int { return 0 }, func() int { return 1 })
+	fmt.Println(result1)
+
+	conditionFalse := 2 > 3
+	result2 := TernaryFn(conditionFalse, func() int { return 0 }, func() int { return 1 })
+	fmt.Println(result2)
+
+	// Output:
+	// 0
+	// 1
+}

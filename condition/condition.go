@@ -86,3 +86,12 @@ func Ternary[T, U any](isTrue T, ifValue U, elseValue U) U {
 func TernaryOperator[T, U any](isTrue T, ifValue U, elseValue U) U {
 	return Ternary(isTrue, ifValue, elseValue)
 }
+
+// TernaryFn checks the value of param `isTrue`, if true returns the result of `ifFunc` else returns the result of `elseFunc`.
+// Play: https://go.dev/play/p/ClccBwNfY_8
+func TernaryFn[T any, U any](isTrue T, ifFunc func() U, elseFunc func() U) U {
+	if Bool(isTrue) {
+		return ifFunc()
+	}
+	return elseFunc()
+}
